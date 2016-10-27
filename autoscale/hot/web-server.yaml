@@ -1,0 +1,78 @@
+heat_template_version: 2014-10-16  
+
+parameters:
+  key_name:
+    type: string
+    default: my-key
+  node_name:
+    type: string
+    default: lb-vm
+  node_server_flavor:
+    type: string
+    default: m1.small
+  node_image_name:
+    type: string
+    default: cirros-0.3.4-x86_64-uec
+  floating_net_id:
+    type: string
+  private_net_id:
+    type: string
+  private_subnet_id:
+    type: string
+  pool_id:
+    type: string
+
+resources:
+
+  vm_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: vm_sg
+      description: Ping,TCP
+      rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 0
+        port_range_max: 65535
+
+  vm_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups:
+        - {get_resource: vm_sg}
+      network_id: { get_param: private_net_id }
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+
+  vm_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: floating_net_id }
+      port_id: { get_resource: vm_port }
+
+  vm_instance:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: key_name }
+      #name: { get_param: node_name }
+      image: { get_param: node_image_name }
+      flavor: { get_param: node_server_flavor }
+      networks:
+        - port: { get_resource: vm_port }
+      user_data_format: RAW
+      user_data: |
+        #!/bin/bash -v
+        export local_ip=$(ifconfig eth0|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
+        touch /home/cirros/http.sh
+        cat << NETCAT > /home/cirros/http.sh
+        while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nYou are connected to $local_ip" | sudo nc -l -p 80 ; done&
+        NETCAT
+        chmod +rx /home/cirros/http.sh
+        /home/cirros/http.sh
+
+  member:
+    type: OS::Neutron::PoolMember
+    properties:
+      pool_id: {get_param: pool_id}
+      address: {get_attr: [vm_instance, first_address]}
+      protocol_port: 80

@@ -1,0 +1,17 @@
+--- /etc/neutron/neutron.conf.old	2016-11-01 19:52:54.111111639 +0000
++++ /etc/neutron/neutron.conf	2016-11-01 19:55:46.751273789 +0000
+@@ -30,7 +30,7 @@
+ 
+ # The service plugins Neutron will use (list value)
+ #service_plugins =
+-service_plugins =neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron.services.metering.metering_plugin.MeteringPlugin
++service_plugins =neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron.services.metering.metering_plugin.MeteringPlugin,neutron_lbaas.services.loadbalancer.plugin.LoadBalancerPluginv2
+ 
+ # The base MAC address Neutron will use for VIFs. The first 3 octets will remain unchanged. If the 4th octet is not 00, it will also be
+ # used. The others will be randomly generated. (string value)
+@@ -1361,3 +1361,5 @@
+ 
+ # Sets the list of available ciphers. value should be a string in the OpenSSL cipher list format. (string value)
+ #ciphers = <None>
++[service_providers]
++service_provider = LOADBALANCERV2:Haproxy:neutron_lbaas.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default

@@ -1,0 +1,11 @@
+--- /etc/neutron/lbaas_agent.ini.old	2016-11-01 20:02:41.305097613 +0000
++++ /etc/neutron/lbaas_agent.ini	2016-11-01 20:03:02.824885875 +0000
+@@ -3,7 +3,7 @@
+ #
+ # From oslo.log
+ #
+-
++interface_driver = openvswitch
+ # If set to true, the logging level will be set to DEBUG instead of the default
+ # INFO level. (boolean value)
+ #debug = false
